@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Order Management</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body{
+            background-image: url("{{ url_for('static', filename='bg.jpg') }}");
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+        .custom-margin {
+            margin-left: 100px;
+            margin-right: 100px;
+        }
+        .center-margin {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .table-container {
+            max-height: 500px;
+            overflow-x: auto;
+            overflow-y: auto;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        .table-title {
+            color: rgb(17, 129, 194);
+        }
+        #order_form_form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        #order_form_form .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        #add_form_form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        #order_form_form .form-group.full-width {
+            grid-column: span 2;
+        }
+        #edit_form_form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        #edit_form .form-group.full-width {
+            grid-column: span 4;
+        }
+        #edit_form .form-group.half-width {
+            grid-column: span 2;
+        }
+    </style>
+    <script>
+        function toggleForm(formId) {
+            var form = document.getElementById(formId);
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container mt-5 custom-margin">
+        <div class="row">
+            <div class="col-lg-6">
+                <h2>Customer Order Management</h2>
+                <form action="/" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" name="cus_id" class="form-control" value="{{ cus_id }}" placeholder="Search by Customer ID">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <button class="btn btn-success" onclick="redirectToIndex()">Refresh</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-lg-6">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-2">
+                <button class="btn btn-success mb-3" onclick="toggleForm('add_form')">New Customer</button></div>
+                <button class="btn btn-success mb-3" onclick="toggleForm('order_form')">New Order</button></div>
+            <div class="col-lg-6"></div>
+        </div>
+        <div id="add_form" style="display: none;" class="custom-margin">
+            <h2>Add New Customer</h2>
+            <form id="add_form_form" action="{{ url_for('add_customer') }}" method="post">
+                <div class="form-group">
+                    <label for="Fname">First Name</label>
+                    <input type="text" name="Fname" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="Lname">Last Name</label>
+                    <input type="text" name="Lname" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="text" name="email" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="contact">Contact</label>
+                    <input type="number" name="contact" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary mr-2">Add Customer</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleForm('add_form')">Cancel</button>
+                </div>
+            </form>
+        </div>
+        <div id="order_form" style="display: none;" class="custom-margin">
+            <h2>Add New Order</h2>
+            <form id="order_form_form" action="{{ url_for('add_order') }}" method="post">
+                <div class="form-group">
+                    <label for="cid">Customer ID</label>
+                    <input type="number" name="cid" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="Iname">Item Name</label>
+                    <input type="text" name="Iname" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="val">Value</label>
+                    <input type="number" name="val" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="service">Service Type</label>
+                    <input type="number" name="service" class="form-control">
+                </div>
+                <div class="form-group full-width">
+                    <label for="address">Address (Optional)</label>
+                    <input type="text" name="address" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary mr-2">Add Order</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleForm('order_form')">Cancel</button>
+                </div>
+            </form>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container mt-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Add/Edit Form -->
+        <div id="edit_form" style="display: none;" class="custom-margin">
+            <h2>Editing Order</h2>
+            <form id="edit_form_form" action="{{ url_for('update_order') }}" method="post">
+                <!-- <input type="hidden" id="student_id" name="id" value="0"> -->
+                <div class="form-group half-width">
+                    <label for="ship_id">ShippingID</label>
+                    <input type="number" id="edit_ship_id" name="ship_id" class="form-control">
+                </div>
+                <div class="form-group half-width">
+                    <label for="cus_id">CustomerID</label>
+                    <input type="number" id="edit_cus_id" name="cus_id" class="form-control">
+                </div>
+                <div class="form-group half-width">
+                    <label for="item">Item Name</label>
+                    <input type="text" id="edit_item" name="item" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="value">Value\Amount</label>
+                    <input type="number" id="edit_value" name="value" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="service">Service Type</label>
+                    <input type="number" id="edit_service" name="service" class="form-control">
+                </div>
+                <div class="form-group half-width">
+                    <label for="status">Status</label>
+                    <select id="edit_status" name="status" class="form-control">
+                        <option value="Oversea Warehouse">Oversea Warehouse</option>
+                        <option value="Shipping">Shipping</option>
+                        <option value="Local Warehouse">Local Warehouse</option>
+                        <option value="Ready">Ready</option>
+                        <option value="Recieved">Recieved</option>
+                    </select>
+                </div>
+                <div class="form-group half-width">
+                    <label for="payment">Payment</label>
+                    <select id="edit_payment" name="payment" class="form-control">
+                        <option value="unpaid">Unpaid</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary mr-2">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleForm('edit_form')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container mt-1">
+        <div class="row">
+            <div class="table-title">
+                <h2>Recent Orders</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-2">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ShippingID</th>
+                        <th>CusID</th>
+                        <th>Contact</th>
+                        <th>Item</th>
+                        <th>Value</th>
+                        <th>Measurement</th>
+                        <th>Service</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Modify</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record[0] }}</td>
+                        <td>{{ record[1] }}</td>
+                        <td>{{ record[2] }}</td>
+                        <td>{{ record[3] }}</td>
+                        <td>{{ record[4] }}</td>
+                        <td>{{ record[5] }}</td>
+                        <td>{{ record[6] }}</td>
+                        <td>{{ record[7] }}</td>
+                        <td>{{ record[8] }}</td>
+                        <td>{{ record[9] }}</td>
+                        <td class="inlin">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-primary" onclick="editOrder('{{ record[0] }}')">Edit</button>
+                                <form id="delete_confirmation_{{ record[0] }}" action="{{ url_for('delete_order', ship_id=record[0]) }}" method="post">
+                                    <input type="submit" value="Delete" class="btn btn-sm btn-danger" style="display: inline-block;">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        function editOrder(ship_id) {
+            fetch(`/get_order/${ship_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit_ship_id').value = data.ship_id;
+                    document.getElementById('edit_cus_id').value = data.cus_id;
+                    document.getElementById('edit_item').value = data.item;
+                    document.getElementById('edit_value').value = data.value;
+                    document.getElementById('edit_service').value = data.service;
+                    document.getElementById('edit_status').value = data.status;
+                    document.getElementById('edit_payment').value = data.payment;
+                    toggleForm('edit_form');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function toggleForm(id) {
+            var form = document.getElementById(id);
+            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+        }
+
+        function redirectToIndex() {
+            window.location.href = "{{ url_for('index') }}";
+        }
+    </script>
+</body>
+</html>
